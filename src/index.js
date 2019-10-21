@@ -56,9 +56,7 @@ export default class Promise {
 
 function runResolver (resolver, resolve, reject) {
   let n = 0
-  const once = fn => v => {
-    if (n++ === 0) fn(v)
-  }
+  const once = fn => v => n++ || fn(v)
   try {
     resolver(once(resolve), once(reject))
   } catch (err) {

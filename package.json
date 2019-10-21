@@ -13,14 +13,14 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "esm": "^3.2.15",
+    "esm": "^3.2.25",
     "microbundle": "^0.11.0",
-    "nodemon": "^1.18.10",
-    "npm-check-updates": "^3.0.4",
-    "prettier-standard": "^9.1.1",
+    "nodemon": "^1.19.4",
+    "npm-check-updates": "^3.1.24",
+    "prettier-standard": "^15.0.1",
     "promises-aplus-tests": "^2.1.2",
     "snazzy": "^8.0.0",
-    "standard": "^12.0.1"
+    "standard": "^14.3.1"
   },
   "dependencies": {}
 }
