@@ -14,13 +14,10 @@
   "license": "ISC",
   "devDependencies": {
     "esm": "^3.2.25",
-    "microbundle": "^0.11.0",
-    "nodemon": "^1.19.4",
-    "npm-check-updates": "^3.1.24",
-    "prettier-standard": "^15.0.1",
-    "promises-aplus-tests": "^2.1.2",
-    "snazzy": "^8.0.0",
-    "standard": "^14.3.1"
-  },
-  "dependencies": {}
+    "microbundle": "^0.13.0",
+    "prettier-standard": "^16.4.1",
+    "promises-aplus-tests": "^2.1.1",
+    "snazzy": "^9.0.0",
+    "standard": "^16.0.3"
+  }
 }

@@ -1,84 +1,69 @@
-'use strict'
+import { initialise, connectPromises, runResolver } from './internals'
 
-export default class Promise {
+export default class Bode {
   constructor (resolver) {
     if (typeof resolver !== 'function') {
       throw new TypeError('bad resolver')
     }
-    let value
-    let status = -1 // pending
-    let callbacks = []
-    const self = {}
-
-    const makeCallbacks = () => {
-      callbacks.map(callback => callback[status](value))
-      callbacks = []
-    }
-
-    const rejectThis = r => {
-      value = r
-      status = 1 // rejected - also index into callback tuple
-      makeCallbacks()
-    }
-
-    const resolveThis = v => {
-      if (v === self) {
-        return rejectThis(new TypeError('self-resolve'))
-      }
-      if (v && (typeof v === 'function' || typeof v === 'object')) {
-        let then
-        try {
-          then = v.then
-        } catch (err) {
-          return rejectThis(err)
-        }
-        if (typeof then === 'function') {
-          return runResolver(then.bind(v), resolveThis, rejectThis)
-        }
-      }
-      value = v
-      status = 0 // resolved - index into callback tuple
-      makeCallbacks()
-    }
-
-    self.then = (onFulfilled, onRejected) =>
-      new Promise((resolve, reject) => {
-        callbacks.push([
-          handler(onFulfilled, resolve, reject) || resolve,
-          handler(onRejected, resolve, reject) || reject
-        ])
-        if (status >= 0) makeCallbacks()
-      })
-    runResolver(resolver, resolveThis, rejectThis)
-    return self
+    initialise(this)
+    runResolver(resolver, this)
   }
-}
 
-function runResolver (resolver, resolve, reject) {
-  let n = 0
-  const once = fn => v => n++ || fn(v)
-  try {
-    resolver(once(resolve), once(reject))
-  } catch (err) {
-    once(reject)(err)
+  then (onFulfilled, onRejected) {
+    const child = Object.create(Bode.prototype)
+    initialise(child)
+    connectPromises(this, child, onFulfilled, onRejected)
+    return child
   }
-}
 
-function handler (fn, resolve, reject) {
-  if (typeof fn !== 'function') return
-  return v =>
-    asap(() => {
-      try {
-        resolve(fn(v))
-      } catch (err) {
-        reject(err)
+  finally (handler) {
+    return this.then(
+      v => {
+        handler()
+        return v
+      },
+      r => {
+        handler()
+        throw r
+      }
+    )
+  }
+
+  static resolve (value) {
+    const Factory = this
+    return new Factory(resolve => resolve(value))
+  }
+
+  static reject (reason) {
+    const Factory = this
+    return new Factory((resolve, reject) => reject(reason))
+  }
+
+  static all (iterable) {
+    const Factory = this
+    const result = []
+    return new Factory((resolve, reject) => {
+      let n = 0
+      for (const el of iterable) {
+        resolveElement(el, n++)
+      }
+      if (!n) resolve(result)
+
+      function resolveElement (el, idx) {
+        Factory.resolve(el).then(value => {
+          result[idx] = value
+          if (!--n) resolve(result)
+        }, reject)
       }
     })
-}
+  }
 
-const asap = ((q = []) => fn => {
-  q.push(fn) === 1 &&
-    (setImmediate || setTimeout)(() => {
-      for (let f = q.shift(); f; f = q.shift()) f()
+  static race (iterable) {
+    const Factory = this
+    return new Factory((resolve, reject) => {
+      for (const el of iterable) {
+        Factory.resolve(el).then(resolve, reject)
+      }
     })
-})()
+  }
+}
